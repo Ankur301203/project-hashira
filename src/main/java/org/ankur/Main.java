@@ -1,15 +1,12 @@
 package org.ankur;
 
-import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import org.json.*;
 
 public class Main {
-
     public static void main(String[] args) throws Exception {
         String[] testFiles = { "testcase1.json", "testcase2.json" };
         for (String file : testFiles) {
@@ -17,7 +14,6 @@ public class Main {
             int n = input.getJSONObject("keys").getInt("n");
             int k = input.getJSONObject("keys").getInt("k");
 
-            // Parse x and y values
             Map<Integer, Point> idToPoint = new HashMap<>();
             for (String key : input.keySet()) {
                 if (key.equals("keys")) continue;
@@ -27,8 +23,6 @@ public class Main {
                 BigInteger y = new BigInteger(value, Integer.parseInt(base));
                 idToPoint.put(x, new Point(BigInteger.valueOf(x), y));
             }
-
-            // Track secret frequencies and valid shares
             Map<BigInteger, Integer> secretFrequency = new HashMap<>();
             Map<BigInteger, List<Set<Integer>>> secretToCombos = new HashMap<>();
 
@@ -45,24 +39,18 @@ public class Main {
                     secretFrequency.put(constantTerm, secretFrequency.getOrDefault(constantTerm, 0) + 1);
                     secretToCombos.computeIfAbsent(constantTerm, x -> new ArrayList<>()).add(new HashSet<>(comboIDs));
 
-                } catch (Exception ignored) {}
+                }
+                catch (Exception ignored) {}
             }
-
-            // Determine correct secret
             BigInteger correctSecret = Collections.max(secretFrequency.entrySet(), Map.Entry.comparingByValue()).getKey();
-
-            // Collect all valid share IDs (those in combos that gave the correct secret)
             Set<Integer> validIDs = new HashSet<>();
             for (Set<Integer> ids : secretToCombos.get(correctSecret)) {
                 validIDs.addAll(ids);
             }
-
-            // All IDs
             Set<Integer> allIDs = new HashSet<>(idToPoint.keySet());
             Set<Integer> invalidIDs = new HashSet<>(allIDs);
             invalidIDs.removeAll(validIDs);
 
-            // Output
             System.out.println("Secret from " + file + ": " + correctSecret);
             System.out.println("Valid Share IDs: " + validIDs);
             System.out.println("Invalid Share IDs: " + invalidIDs);
@@ -83,7 +71,6 @@ public class Main {
             matrix[i][k] = y;
         }
 
-        // Gaussian Elimination
         for (int i = 0; i < k; i++) {
             BigDecimal div = matrix[i][i];
             for (int j = 0; j <= k; j++)
@@ -98,7 +85,6 @@ public class Main {
                 }
             }
         }
-
         BigDecimal[] solution = new BigDecimal[k];
         for (int i = 0; i < k; i++)
             solution[i] = matrix[i][k];
