@@ -23,89 +23,91 @@ public class Main {
                 BigInteger y = new BigInteger(value, Integer.parseInt(base));
                 idToPoint.put(x, new Point(BigInteger.valueOf(x), y));
             }
-            Map<BigInteger, Integer> secretFrequency = new HashMap<>();
+            Map<BigInteger, Integer> freq = new HashMap<>();
             Map<BigInteger, List<Set<Integer>>> secretToCombos = new HashMap<>();
 
-            List<List<Integer>> combinations = combinations(new ArrayList<>(idToPoint.keySet()), k);
+            List<List<Integer>> combinations = comb(new ArrayList<>(idToPoint.keySet()), k);
 
-            for (List<Integer> comboIDs : combinations) {
+            for (List<Integer> currList : combinations) {
                 List<Point> subset = new ArrayList<>();
-                for (int id : comboIDs)
+                for (int id : currList)
                     subset.add(idToPoint.get(id));
                 try {
-                    BigDecimal[] coeffs = solvePolynomial(subset);
+                    BigDecimal[] coeffs = solve(subset);
                     BigInteger constantTerm = coeffs[0].toBigInteger();
 
-                    secretFrequency.put(constantTerm, secretFrequency.getOrDefault(constantTerm, 0) + 1);
-                    secretToCombos.computeIfAbsent(constantTerm, x -> new ArrayList<>()).add(new HashSet<>(comboIDs));
+                    freq.put(constantTerm, freq.getOrDefault(constantTerm, 0) + 1);
+                    secretToCombos.computeIfAbsent(constantTerm, x -> new ArrayList<>()).add(new HashSet<>(currList));
 
                 }
                 catch (Exception ignored) {}
             }
-            BigInteger correctSecret = Collections.max(secretFrequency.entrySet(), Map.Entry.comparingByValue()).getKey();
+            BigInteger ansSec = Collections.max(freq.entrySet(), Map.Entry.comparingByValue()).getKey();
             Set<Integer> validIDs = new HashSet<>();
-            for (Set<Integer> ids : secretToCombos.get(correctSecret)) {
+            for (Set<Integer> ids : secretToCombos.get(ansSec)) {
                 validIDs.addAll(ids);
             }
             Set<Integer> allIDs = new HashSet<>(idToPoint.keySet());
             Set<Integer> invalidIDs = new HashSet<>(allIDs);
             invalidIDs.removeAll(validIDs);
 
-            System.out.println("Secret from " + file + ": " + correctSecret);
+            System.out.println("Secret from " + file + ": " + ansSec);
             System.out.println("Valid Share IDs: " + validIDs);
             System.out.println("Invalid Share IDs: " + invalidIDs);
             System.out.println("====================================");
         }
     }
 
-    static BigDecimal[] solvePolynomial(List<Point> points) {
+    static BigDecimal[] solve(List<Point> points) {
         int k = points.size();
-        BigDecimal[][] matrix = new BigDecimal[k][k + 1];
+        BigDecimal[][] mat = new BigDecimal[k][k + 1];
 
         for (int i = 0; i < k; i++) {
             BigDecimal x = new BigDecimal(points.get(i).x);
             BigDecimal y = new BigDecimal(points.get(i).y);
             for (int j = 0; j < k; j++) {
-                matrix[i][j] = x.pow(j);
+                mat[i][j] = x.pow(j);
             }
-            matrix[i][k] = y;
+            mat[i][k] = y;
         }
 
         for (int i = 0; i < k; i++) {
-            BigDecimal div = matrix[i][i];
-            for (int j = 0; j <= k; j++)
-                matrix[i][j] = matrix[i][j].divide(div, 50, BigDecimal.ROUND_HALF_UP);
+            BigDecimal div = mat[i][i];
+            for (int j = 0; j <= k; j++) {
+                mat[i][j] = mat[i][j].divide(div, 50, BigDecimal.ROUND_HALF_UP);
+            }
 
             for (int l = 0; l < k; l++) {
                 if (l != i) {
-                    BigDecimal factor = matrix[l][i];
+                    BigDecimal factor = mat[l][i];
                     for (int j = 0; j <= k; j++) {
-                        matrix[l][j] = matrix[l][j].subtract(factor.multiply(matrix[i][j]));
+                        mat[l][j] = mat[l][j].subtract(factor.multiply(mat[i][j]));
                     }
                 }
             }
         }
-        BigDecimal[] solution = new BigDecimal[k];
-        for (int i = 0; i < k; i++)
-            solution[i] = matrix[i][k];
+        BigDecimal[] ans = new BigDecimal[k];
+        for (int i = 0; i < k; i++) {
+            ans[i] = mat[i][k];
+        }
 
-        return solution;
+        return ans;
     }
 
-    static List<List<Integer>> combinations(List<Integer> input, int k) {
-        List<List<Integer>> result = new ArrayList<>();
-        combineHelper(input, 0, k, new ArrayList<>(), result);
-        return result;
+    static List<List<Integer>> comb(List<Integer> input, int k) {
+        List<List<Integer>> ans = new ArrayList<>();
+        combHelper(input, 0, k, new ArrayList<>(), ans);
+        return ans;
     }
 
-    static void combineHelper(List<Integer> input, int start, int k, List<Integer> temp, List<List<Integer>> result) {
+    static void combHelper(List<Integer> input, int start, int k, List<Integer> temp, List<List<Integer>> result) {
         if (temp.size() == k) {
             result.add(new ArrayList<>(temp));
             return;
         }
         for (int i = start; i < input.size(); i++) {
             temp.add(input.get(i));
-            combineHelper(input, i + 1, k, temp, result);
+            combHelper(input, i + 1, k, temp, result);
             temp.remove(temp.size() - 1);
         }
     }
