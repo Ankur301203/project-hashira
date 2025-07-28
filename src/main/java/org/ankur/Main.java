@@ -54,7 +54,6 @@ public class Main {
             System.out.println("Secret from " + file + ": " + ansSec);
             System.out.println("Valid Share IDs: " + validIDs);
             System.out.println("Invalid Share IDs: " + invalidIDs);
-            System.out.println("====================================");
         }
     }
 
